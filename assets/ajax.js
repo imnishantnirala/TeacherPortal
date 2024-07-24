@@ -1,48 +1,56 @@
 $(document).ready(function () {
-    // this code For fatch data from data base with ajax 
+    // Function to fetch data from database with AJAX
     function loadTable() {
         $.ajax({
-            url: "script/fatch-data.php",
+            url: "script/fetch-data.php",
             type: "POST",
-            success: function (contact_data) {
-                $("#studentDataList").html(contact_data);
-                // console.log('student data : ', contact_data);
+            success: function (data) {
+                $("#studentDataList").html(data);
+            },
+            error: function () {
+                showPopUp('Error fetching data from database.', 'error');
             }
         });
-    };
+    }
     loadTable();
 
-    //this code for insert data into Database  
+    // Function to insert data into the database
     $("#addStudent").on("click", function (e) {
         e.preventDefault();
+
         var name = $("#name").val();
         var subject = $("#subject").val();
         var mark = $("#mark").val();
         
-        if (name == "" || subject == "" || mark == "") {
+        if (!name || !subject || !mark) {
             showPopUp('All fields are required.', 'error');
-        } else {
-            $.ajax({
-                url: "script/insert-data.php",
-                type: "POST",
-                data: { name: name, subject: subject, mark: mark },
-                success: function (response) {
-                    if (response == 1) {
-                        loadTable();
-                        showPopUp('Insert Data SuccessFull !', 'success');
-                    } else {
-                        showPopUp('Cant Update Record Something Went Wrong !', 'error');
-                    }
-                    $('#addModal').modal('hide');
-                }
-            });
+            return;
         }
+
+        $.ajax({
+            url: "script/insert-data.php",
+            type: "POST",
+            data: { name: name, subject: subject, mark: mark },
+            success: function (response) {
+                if (response == 1) {
+                    loadTable();
+                    showPopUp('Data inserted successfully!', 'success');
+                } else {
+                    showPopUp('Failed to insert data. Something went wrong!', 'error');
+                }
+                $('#addModal').modal('hide');
+            },
+            error: function () {
+                showPopUp('Error inserting data.', 'error');
+            }
+        });
     });
 
-    // this code for delete data from Database 
+    // Function to delete data from the database
     $(document).on("click", "#deleteBtn", function () {
-        if (confirm("Do You Really want to delete this record ?")) {
+        if (confirm("Do you really want to delete this record?")) {
             var studentId = $(this).data("studentid");
+            
             $.ajax({
                 url: "script/delete-data.php",
                 type: "POST",
@@ -50,30 +58,36 @@ $(document).ready(function () {
                 success: function (response) {
                     if (response == 1) {
                         loadTable();
-                        showPopUp('Delete SuccessFull !', 'success');
+                        showPopUp('Record deleted successfully!', 'success');
                     } else {
-                        showPopUp('Cant Update Record Something Went Wrong !', 'error');
+                        showPopUp('Failed to delete record. Something went wrong!', 'error');
                     }
+                },
+                error: function () {
+                    showPopUp('Error deleting record.', 'error');
                 }
             });
         }
     });
 
-    // Fill Update form value
-    $(document).on("click", "#editStudent", function (e) {
+    // Function to fill update form values
+    $(document).on("click", "#editStudent", function () {
         var studentId = $(this).data("studentid");
-        console.log(' studentId : ', studentId);
+        
         $.ajax({
             url: "layout/updateModel.php",
             type: "POST",
             data: { id: studentId },
             success: function (data) {
                 $("#editStudentForm").html(data);
+            },
+            error: function () {
+                showPopUp('Error loading update form.', 'error');
             }
         });
     });
 
-    // Save Update form
+    // Function to save updated form values
     $(document).on("click", "#saveStudent", function (e) {
         e.preventDefault();
 
@@ -85,34 +99,34 @@ $(document).ready(function () {
             url: "script/update-data.php",
             type: "POST",
             data: { id: id, name: name, subject: subject, mark: mark },
-            success: function (data) {
-                if (data == 1) {
+            success: function (response) {
+                if (response == 1) {
                     loadTable();
-                    showPopUp('Update SuccessFull !', 'success');
+                    showPopUp('Record updated successfully!', 'success');
                 } else {
-                    showPopUp('Cant Update Record Something Went Wrong !', 'error');
+                    showPopUp('Failed to update record. Something went wrong!', 'error');
                 }
                 $('#editModal').modal('hide');
+            },
+            error: function () {
+                showPopUp('Error updating record.', 'error');
             }
         });
     });
 
-
+    // Function to show popup messages
     function showPopUp(message, type) {
-        var alert = 'alert-primary';
-        if(type == 'success') alert = 'alert-success';
-        if(type == 'warning') alert = 'alert-warning';
-        if(type == 'error') alert = 'alert-danger';
+        var alertClass = 'alert-primary';
+        if (type === 'success') alertClass = 'alert-success';
+        if (type === 'warning') alertClass = 'alert-warning';
+        if (type === 'error') alertClass = 'alert-danger';
         
-
         var output = `
-            <div class="alert `+alert+`  alert-dismissible fade show shadow" role="alert">
-                `+ message +`
+            <div class="alert ${alertClass} alert-dismissible fade show shadow" role="alert">
+                ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         `;
         $(".alertBox").html(output).slideDown();
     }
-    
-
 });
